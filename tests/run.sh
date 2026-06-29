@@ -89,9 +89,9 @@ assert_contains "lmstudio APIKEY"    "$lb" "APIKEY=lm-studio"
 assert_status "unknown backend fails" 1 bash scripts/lib/backend.sh bogus http://o http://l
 
 # ---------------------------------------------------------------------------
-section "select-model.sh (incl. fix 4: ollama is GGUF-only)"
-assert_eq  "ollama+gguf -> gguf tag" "qwen|qwen3.6:35b" "$(bash scripts/lib/select-model.sh ollama gguf qwen)"
-assert_eq  "ollama+mlx  -> gguf tag" "qwen|qwen3.6:35b" "$(bash scripts/lib/select-model.sh ollama mlx qwen)"
+section "select-model.sh (ollama uses the MLX tag on Apple Silicon)"
+assert_eq  "ollama+gguf -> plain tag" "qwen|qwen3.6:35b"     "$(bash scripts/lib/select-model.sh ollama gguf qwen)"
+assert_eq  "ollama+mlx  -> mlx tag"   "qwen|qwen3.6:35b-mlx" "$(bash scripts/lib/select-model.sh ollama mlx qwen)"
 assert_eq  "lmstudio qwen name"      "qwen|qwen/qwen3.6-35b-a3b" "$(bash scripts/lib/select-model.sh lmstudio mlx qwen)"
 assert_eq  "lmstudio gemma name"     "gemma|gemma-4-e2b-it"      "$(bash scripts/lib/select-model.sh lmstudio gguf gemma)"
 assert_status "unknown model fails"  1 bash scripts/lib/select-model.sh ollama gguf bogus

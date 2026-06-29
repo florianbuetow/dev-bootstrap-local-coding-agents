@@ -11,14 +11,14 @@ model_key="${3:-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Load catalog into parallel arrays
-keys=(); labels=(); ogguf=(); lmsname=()
+keys=(); labels=(); omlx=(); ogguf=(); lmsname=()
 while IFS= read -r line; do
   [[ -z "$line" ]] && continue
-  # fields: key|label|params|size|quant|<ollama-mlx>|ollama-gguf|lmstudio-name
-  IFS='|' read -r k label params size quant _ b l <<< "$line"
+  # fields: key|label|params|size|quant|ollama-mlx-tag|ollama-gguf-tag|lmstudio-name
+  IFS='|' read -r k label params size quant a b l <<< "$line"
   keys+=("$k")
   labels+=("$label  —  $params · $size · $quant")
-  ogguf+=("$b"); lmsname+=("$l")
+  omlx+=("$a"); ogguf+=("$b"); lmsname+=("$l")
 done < <(bash "$SCRIPT_DIR/catalog.sh" --parse)
 
 # Find model by key or prompt interactively
@@ -44,8 +44,9 @@ key="${keys[$sel]}"
 
 # Resolve backend-specific model identifier
 if [ "$backend" = "ollama" ]; then
-  # Ollama is GGUF-only (llama.cpp); the mlx/gguf arch split does not apply to it.
-  id="${ogguf[$sel]}"
+  # Apple Silicon uses the MLX-optimized ollama tag (e.g. qwen3.6:35b-mlx);
+  # Intel/Linux uses the plain tag (qwen3.6:35b). Per the model catalog source.
+  if [ "$fmt" = "mlx" ]; then id="${omlx[$sel]}"; else id="${ogguf[$sel]}"; fi
 else
   # LM Studio picks the mlx vs gguf build at download time (lms get --$fmt).
   id="${lmsname[$sel]}"

@@ -32,6 +32,27 @@ default:
 models:
     @bash scripts/lib/catalog.sh --list
 
+# Suggest and download a model via the selected backend (no workspace setup).
+# Interactive when backend/model are omitted: pick a backend, then a catalog model.
+download backend='' model='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    eval "$(bash scripts/lib/brew-env.sh)"
+    backend="$(bash scripts/lib/select-backend.sh '{{backend}}')"
+    fmt="$(bash scripts/lib/arch.sh '{{force_fmt}}')"
+    echo "Hardware $(uname -m) -> using $(echo "$fmt" | tr '[:lower:]' '[:upper:]') models." >&2
+    model_info="$(bash scripts/lib/select-model.sh "$backend" "$fmt" '{{model}}')"
+    key="${model_info%%|*}"; model_id="${model_info##*|}"
+    echo "▸ backend=$backend  model=$key  identifier=$model_id  format=$fmt" >&2
+    just --justfile "{{justfile()}}" install-deps "$backend" >&2
+    eval "$(bash scripts/lib/brew-env.sh)"
+    just --justfile "{{justfile()}}" serve "$backend" >&2
+    eval "$(bash scripts/lib/backend.sh "$backend" '{{ollama_host}}' '{{lmstudio_host}}')"
+    export HOST APIKEY LMS_BIN
+    served="$(bash "scripts/backends/$backend/download.sh" "$model_id" "$fmt" "$key")"
+    echo "✓ model downloaded and served as: $served" >&2
+    echo "$served"
+
 # Full bootstrap. Interactive when backend/model are omitted.
 init dest=default_dest backend='' model='':
     #!/usr/bin/env bash
