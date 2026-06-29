@@ -8,9 +8,10 @@
 #   just init ~/my-workspace ollama qwen     # non-interactive (backend + model key)
 #   just init ~/my-workspace lmstudio gemma
 #   just models                              # list the model catalog
-#   cd ~/my-workspace && qwen
+#   just run ~/my-workspace                  # launch qwen in the workspace
 #
 # Apple Silicon -> MLX builds are used automatically; Intel -> GGUF.
+# qwen-code runs under a pinned Node 22 (it breaks on Node >=24); use `just run`.
 # The workspace gets its own ./.qwen/ config; global ~/.qwen is untouched.
 # -------------------------------------------------------------------------
 
@@ -52,7 +53,7 @@ init dest=default_dest backend='' model='':
     bash scripts/workspace/verify.sh "$served"
     echo ""
     echo "✅ Ready. Start coding with:"
-    echo "     cd {{dest}} && qwen"
+    echo "     just run {{dest}}"
 
 # Write the self-contained qwen-code config into <dest>/.qwen/ (+ QWEN.md).
 configure dest backend served:
@@ -104,13 +105,15 @@ serve backend:
     export HOST LMS_BIN
     bash "scripts/backends/$b/serve.sh"
 
-# Launch the qwen agent inside the workspace.
+# Launch the qwen agent inside the workspace (runs under a qwen-compatible Node).
 run dest=default_dest:
     #!/usr/bin/env bash
     set -euo pipefail
     eval "$(bash scripts/lib/brew-env.sh)"
+    node_bin="$(bash scripts/lib/qwen-node.sh)" || { echo "✗ no qwen-compatible Node (node@22). Run: just install-deps <backend>" >&2; exit 1; }
+    qwen_cli="$(bash scripts/lib/qwen-cli.sh)" || { echo "✗ qwen-code not installed. Run: just install-deps <backend>" >&2; exit 1; }
     cd "{{dest}}"
-    exec qwen
+    exec "$node_bin" "$qwen_cli"
 
 # Run the offline unit test suite (no network, no installs).
 test:

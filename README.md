@@ -7,11 +7,15 @@ into a self-contained [qwen-code](https://github.com/QwenLM/qwen-code) workspace
 ```bash
 just init ~/my-workspace                 # interactive: choose backend + model
 just init ~/my-workspace lmstudio qwen   # non-interactive (backend + model key)
-cd ~/my-workspace && qwen
+just run ~/my-workspace                  # launch the qwen agent
 ```
 
 Apple Silicon pulls MLX builds automatically; Intel uses GGUF. The workspace gets
 its own `./.qwen/` config — your global `~/.qwen` is never touched.
+
+> Launch with `just run`, not a bare `qwen`: qwen-code breaks on Node ≥24
+> ([qwen-code#4274](https://github.com/QwenLM/qwen-code/issues/4274)), so the
+> bootstrap installs Node 22 LTS and runs qwen under it.
 
 ## Requirements
 
@@ -27,7 +31,7 @@ its own `./.qwen/` config — your global `~/.qwen` is never touched.
 just models                              # list the model catalog
 just check lmstudio                      # verify lms + server reachability
 just init ~/my-workspace lmstudio qwen   # configure the workspace
-cd ~/my-workspace && qwen                # start coding
+just run ~/my-workspace                  # start coding (qwen under Node 22)
 ```
 
 If the requested model is **already loaded** in LM Studio, `init` reuses it and
